@@ -4,8 +4,8 @@
  */
 
 import { baseUrl, sseBaseUrl } from "@utils";
-import { GithubRelease } from "@app/types/Update";
 import { AuthContext } from "@utils/Context";
+import { GithubRelease } from "@app/types/Update";
 
 type RequestBody = BodyInit | object | Record<string, unknown> | null;
 type Primitive = string | number | boolean | symbol | undefined;
@@ -150,7 +150,36 @@ export async function HttpClient<T = unknown>(
     }
   }
 
+<<<<<<< HEAD
   const response = await window.fetch(`${baseUrl()}${endpoint}`, init);
+=======
+  const response = await window.fetch(endpoint, init);
+
+  switch (response.status) {
+  case 204:
+    // 204 contains no data, but indicates success
+    return Promise.resolve<T>({} as T);
+  case 401:
+    // Remove auth info from localStorage
+    AuthContext.reset();
+
+    // Show an error toast to notify the user what occurred
+    return Promise.reject(new Error(`[401] Unauthorized: "${endpoint}"`));
+  case 404:
+    return Promise.reject(new Error(`[404] Not found: "${endpoint}"`));
+  case 500:
+    const health = await window.fetch("api/healthz/liveness");
+    if (!health.ok) {
+      return Promise.reject(
+        new Error(`[500] Offline (Internal server error): "${endpoint}"`, { cause: "OFFLINE" })
+      );
+    }
+    break;
+  default:
+    break;
+  }
+
+>>>>>>> 67c6cd4 (refactor: remove baseUrl from api calls and sseBaseUrl)
   const isJson = response.headers.get("Content-Type")?.includes("application/json");
 
   if (response.status >= 200 && response.status < 300) {
@@ -364,7 +393,7 @@ export const APIClient = {
       body: { msg: msg }
     }),
     events: (network: string) => new EventSource(
-      `${sseBaseUrl()}api/irc/events?stream=${encodeRFC3986URIComponent(network)}`,
+      `api/irc/events?stream=${encodeRFC3986URIComponent(network)}`,
       { withCredentials: true }
     )
   },
@@ -373,7 +402,7 @@ export const APIClient = {
     getFile: (file: string) => appClient.Get(`api/logs/files/${file}`)
   },
   events: {
-    logs: () => new EventSource(`${sseBaseUrl()}api/events?stream=logs`, { withCredentials: true })
+    logs: () => new EventSource("api/events?stream=logs", { withCredentials: true })
   },
   notifications: {
     getAll: () => appClient.Get<ServiceNotification[]>("api/notification"),
