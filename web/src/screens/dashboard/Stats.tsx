@@ -14,7 +14,7 @@ interface StatsItemProps {
   value?: number;
   placeholder?: string;
   to?: string;
-  eventType?: string;
+  eventType?: any;
 }
 
 const StatsItem = ({ name, placeholder, value, to, eventType }: StatsItemProps) => (
